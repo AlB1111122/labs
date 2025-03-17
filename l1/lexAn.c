@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// **1. Keywords**
 const char *keywords[] = {"auto",     "break",   "case",   "char",     "const",
                           "continue", "default", "do",     "double",   "else",
                           "enum",     "extern",  "float",  "for",      "goto",
@@ -68,12 +67,34 @@ int isInteger(char *str) {
   return str[i] == '\0';
 }
 
+void isString(const char *input, int *index) {
+  char lexeme[510];
+  int idx = 0;
+  (*index)++; // skip past first quote
+
+  while (input[*index] != '\0' && input[*index] != '"') {
+    if (idx < 509) {
+      lexeme[idx++] = input[*index];
+    }
+    (*index)++;
+  }
+
+  lexeme[idx] = '\0';
+  printf("String Literal: \"%s\"\n", lexeme);
+}
+
 void lexer(char *input) {
   char lexeme[510];
   int idx = 0;
   int len = strlen(input);
+  int inString = 0;
 
   for (int i = 0; i <= len; i++) {
+    if (input[i] == '"') {
+      isString(input, &i);
+      continue;
+    }
+
     if (isDelimiter(input[i]) || input[i] == '\0' || isspace(input[i])) {
       if (idx > 0) {
         lexeme[idx] = '\0';
@@ -98,7 +119,7 @@ void lexer(char *input) {
       }
 
       if (isDelimiter(input[i])) {
-        printf("Delimiter: %c\n", input[i]);
+        printf("Punctuation: %c\n", input[i]);
       }
     } else {
       if (idx < 509) {
@@ -109,7 +130,8 @@ void lexer(char *input) {
 }
 
 int main() {
-  char input[] = "int a = 10;\n if (a >= -5) a = a + 1;";
+  char input[] =
+      "int a = 10;\n if (a >= -5) a = a + 1;\n char str[] = \"Hello, world!\";";
   lexer(input);
   return 0;
 }
