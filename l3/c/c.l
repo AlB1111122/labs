@@ -11,4 +11,4 @@
 . { return yytext[0]; }
 
 %%
-int yywrap() { return 1; }  // Return 1 to indicate end of input
+int yywrap() { return 1; }
