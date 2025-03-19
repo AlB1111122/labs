@@ -1,14 +1,15 @@
 %{
+#include "ast.h"
 #include "y.tab.h"
 %}
 
 %%
 [ \t\n]+          ;  
-"<"[a-zA-Z0-9_]+">"   { yylval.str = strdup(yytext);  printf("NONTERMINAL ");return NONTERMINAL;}
-"::="             {  printf("COLONEQ "); return COLON_EQUALS; }
-";"             {  printf("SEMICOLON "); return SEMICOLON; }
-"|"               { printf("PIPE ");return PIPE; }
-\"[^\"]+\"        { yylval.str = strdup(yytext);printf("TERMINAL "); return TERMINAL; }
+"<"[a-zA-Z0-9_]+">"   { yylval.str = strdup(yytext); return NONTERMINAL;}
+"::="             {   return COLON_EQUALS; }
+";"             {  return SEMICOLON; }
+"|"               { return PIPE; }
+\"[^\"]+\"        { yylval.str = strdup(yytext); return TERMINAL; }
 .                     { return yytext[0]; }  // <-- catch-all LAST
 %%
 
