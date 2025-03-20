@@ -2,6 +2,7 @@
 using namespace std;
 
 map<string, vector<string>> grammar;
+vector<string> non_terminals_order;
 set<string> non_terminals;
 map<string, set<string>> firstSets;
 map<string, set<string>> followSets;
@@ -92,7 +93,10 @@ int main() {
     auto pos = line.find("->");
     string head = line.substr(0, pos);
     head.erase(remove(head.begin(), head.end(), ' '), head.end());
-    non_terminals.insert(head);
+    if (non_terminals.find(head) == non_terminals.end()) {
+      non_terminals.insert(head);
+      non_terminals_order.push_back(head);
+    }
     string bodies = line.substr(pos + 2);
 
     stringstream ss(bodies);
@@ -104,16 +108,16 @@ int main() {
 
   start_symbol = grammar.begin()->first;
 
-  for (auto &nt : non_terminals) {
+  for (auto &nt : non_terminals_order) {
     compute_first(nt);
   }
 
-  for (auto &nt : non_terminals) {
+  for (auto &nt : non_terminals_order) {
     compute_follow(nt);
   }
 
   cout << "\nFirst sets:" << endl;
-  for (auto &nt : non_terminals) {
+  for (auto &nt : non_terminals_order) {
     cout << "First(" << nt << ") = { ";
     for (auto &f : firstSets[nt]) {
       cout << f << ", ";
@@ -122,7 +126,7 @@ int main() {
   }
 
   cout << "\nFollow sets:" << endl;
-  for (auto &nt : non_terminals) {
+  for (auto &nt : non_terminals_order) {
     cout << "Follow(" << nt << ") = { ";
     for (auto &f : followSets[nt]) {
       cout << f << ", ";
