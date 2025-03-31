@@ -50,6 +50,7 @@ int yylex(void);
 
 %token <str> NONTERMINAL TERMINAL
 %token <str> COLON_EQUALS PIPE SEMICOLON
+%token EXIT_TOKEN  // Define the EXIT token
 %left PIPE
 
 %type <node> S Z R E W T D F
@@ -71,9 +72,7 @@ Z: R Z {
 
 R: NONTERMINAL COLON_EQUALS E SEMICOLON { 
         ASTNode *nonterm = createNode("NONTERMINAL", $1, 0);
-        ASTNode *colonEq = createNode("COLON_EQUALS", $2, 0);
-        ASTNode *semi = createNode("SEMICOLON", $4, 0);
-        $$ = createNode("R", NULL, 4, nonterm, colonEq, $3, semi);
+        $$ = createNode("R", NULL, 2, nonterm, $3);
     }
   ;
 
@@ -83,12 +82,11 @@ E: T W {
   ;
 
 W: PIPE E { 
-        /* For the production W -> PIPE E, include a node for the pipe token */
-        ASTNode *pipeNode = createNode("PIPE", $1, 0);
-        $$ = createNode("W", NULL, 2, pipeNode, $2);
+        ASTNode *pipeNode = createNode("PIPE", "|", 0);
+        $$ = createNode("E", NULL, 2, pipeNode, $2);
     }
   | /* empty */ { 
-        $$ = createNode("W", "epsilon", 0);
+        $$ = createNode("E", NULL, 0);
     }
   ;
 
@@ -101,7 +99,7 @@ D: F D {
         $$ = createNode("D", NULL, 2, $1, $2);
     }
   | /* empty */ { 
-        $$ = createNode("D", "epsilon", 0);
+        $$ = createNode("D", NULL, 0);
     }
   ;
 
@@ -119,7 +117,7 @@ void yyerror(const char *s) {
 }
 
 int main() {
-    printf("Enter BNF rules:\n");
+    printf("1Enter BNF rules(use \"::=\" for equals and and line on semicolon. Enclose non-terminals in <> and terminals in \"\"):\n");
     yyparse();
     printf("\nAST\n");
     printAST(astRoot, 0);
