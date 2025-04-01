@@ -50,7 +50,6 @@ int yylex(void);
 
 %token <str> NONTERMINAL TERMINAL
 %token <str> COLON_EQUALS PIPE SEMICOLON
-%token EXIT_TOKEN  // Define the EXIT token
 %left PIPE
 
 %type <node> S Z R E W T D F
@@ -66,7 +65,7 @@ Z: R Z {
         $$ = createNode("Z", NULL, 2, $1, $2);
     }
   | /* empty */ { 
-        $$ = createNode("Z", "epsilon", 0);
+        $$ = createNode("Z", "epsilon", 0);  // explicit epsilon
     }
   ;
 
@@ -86,7 +85,7 @@ W: PIPE E {
         $$ = createNode("E", NULL, 2, pipeNode, $2);
     }
   | /* empty */ { 
-        $$ = createNode("E", NULL, 0);
+        $$ = createNode("W", "epsilon", 0);  // explicit epsilon
     }
   ;
 
@@ -99,7 +98,7 @@ D: F D {
         $$ = createNode("D", NULL, 2, $1, $2);
     }
   | /* empty */ { 
-        $$ = createNode("D", NULL, 0);
+        $$ = createNode("D", "epsilon", 0);  // explicit epsilon
     }
   ;
 
@@ -117,7 +116,7 @@ void yyerror(const char *s) {
 }
 
 int main() {
-    printf("1Enter BNF rules(use \"::=\" for equals and and line on semicolon. Enclose non-terminals in <> and terminals in \"\"):\n");
+    printf("Enter BNF rules(use \"::=\" for equals and and line on semicolon. Enclose non-terminals in <> and terminals in \"\"):\n");
     yyparse();
     printf("\nAST\n");
     printAST(astRoot, 0);

@@ -1,1 +1,0 @@
-<expr> ::= <term> | <term> "+" <expr> ;<term> ::= <factor> | <factor> "*" <term> ;<factor> ::= <number> | "(" <expr> ")" ;
