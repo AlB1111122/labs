@@ -217,12 +217,25 @@ class LL1Parser {
   }
 };
 
+map<string, vector<string>> grammar;
+
 int main() {
-  map<string, vector<string>> grammar = {{"E", {"T E'"}},
-                                         {"E'", {"+ T E'", "ε"}},
-                                         {"T", {"F T'"}},
-                                         {"T'", {"* F T'", "ε"}},
-                                         {"F", {"( E )", "id"}}};
+  cout << "Enter grammer (space seperated tokens e.g. S -> a A"
+       << "A -> b | c): ";
+  string line;
+  while (getline(cin, line)) {
+    if (line.empty()) break;
+    auto pos = line.find("->");
+    string head = line.substr(0, pos);
+    head.erase(remove(head.begin(), head.end(), ' '), head.end());
+    string bodies = line.substr(pos + 2);
+
+    stringstream ss(bodies);
+    string prod;
+    while (getline(ss, prod, '|')) {
+      grammar[head].push_back(prod);
+    }
+  }
 
   LL1Parser parser(grammar, grammar.begin()->first);
   parser.printParsingTable();
