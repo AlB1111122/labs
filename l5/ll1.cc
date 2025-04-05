@@ -164,6 +164,57 @@ class LL1Parser {
     }
     return false;
   }
+
+  void printParsingTable() {
+    set<string> terminals;
+    set<string> nonTerminals;
+
+    for (const auto& entry : parsingTable) {
+      nonTerminals.insert(entry.first.first);  // row
+      terminals.insert(entry.first.second);    // col
+    }
+
+    cout << setw(15) << left << " ";
+    for (const string& terminal : terminals) {
+      cout << setw(15) << left << terminal;
+    }
+    cout << endl;
+
+    cout << string(15 + terminals.size() * 15, '-') << endl;
+
+    for (const string& nonTerminal : nonTerminals) {
+      cout << setw(15) << left << nonTerminal;
+      for (const string& terminal : terminals) {
+        auto it = parsingTable.find({nonTerminal, terminal});
+        if (it != parsingTable.end()) {
+          cout << setw(15) << left << it->second;
+        } else {
+          cout << setw(15) << left << "";
+        }
+      }
+      cout << endl;
+    }
+  }
+
+  void printFistFollow() {
+    cout << "\nFirst sets:" << endl;
+    for (auto& nt : nonTerminals) {
+      cout << "First(" << nt << ") = { ";
+      for (auto& f : firstSets[nt]) {
+        cout << f << ", ";
+      }
+      cout << "}\n";
+    }
+
+    cout << "\nFollow sets:" << endl;
+    for (auto& nt : nonTerminals) {
+      cout << "Follow(" << nt << ") = { ";
+      for (auto& f : followSets[nt]) {
+        cout << f << ", ";
+      }
+      cout << "}\n";
+    }
+  }
 };
 
 int main() {
@@ -174,9 +225,10 @@ int main() {
                                          {"F", {"( E )", "id"}}};
 
   LL1Parser parser(grammar, grammar.begin()->first);
+  parser.printParsingTable();
+  parser.printFistFollow();
 
-  cout << "Enter input string (space-separated tokens, e.g., 'id + id * id', "
-          "represent epsilons as ε): ";
+  cout << "Enter input string (space-separated tokens, e.g., 'id + id * id': ";
   string input;
   getline(cin, input);
 
