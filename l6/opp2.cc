@@ -9,7 +9,9 @@ using namespace std;
 
 char *input;
 int i = 0;
-char lasthandle[6], lStack[50];
+char lasthandle[6];
+vector<string> lStack;
+vector<string> inputTokens;
 map<string, vector<string>> grammar;
 set<string> nonTerminals, terminals;
 map<pair<string, string>, char> precedenceTable;
@@ -165,44 +167,46 @@ char getPrecedence(const string &a, const string &b) {
   return ' ';
 }
 
-int shift() {
-  lStack[++top] = *(input + i++);
-  lStack[top + 1] = '\0';
-}
+void shift() { lStack.push_back(inputTokens[i++]); }
 
-int reduce() {
+bool reduce() {
   for (const auto &[head, prods] : grammar) {
     for (auto prod : prods) {
       auto symbols = split(prod);
       int len = symbols.size();
-      if (len <= top) {
+      if (len <= lStack.size()) {
         bool match = true;
         for (int t = 0; t < len; ++t) {
-          if (lStack[top - t] != symbols[len - t - 1][0]) {
+          if (lStack[lStack.size() - len + t] != symbols[t]) {
             match = false;
             break;
           }
         }
         if (match) {
-          lStack[top - len + 1] = head[0];  // Use head of production
-          top = top - len + 1;
+          lStack.erase(lStack.end() - len, lStack.end());
+          lStack.push_back(head);
           strcpy(lasthandle, prod.c_str());
-          lStack[top + 1] = '\0';
-          return 1;  // Successful reduction
+          return true;  // successful reduction
         }
       }
     }
   }
-  return 0;
+  return false;
+}
+string findLastTerminal(const vector<string> &stack) {
+  for (int idx = stack.size() - 1; idx >= 0; --idx) {
+    if (terminals.count(stack[idx]) || stack[idx] == "$") return stack[idx];
+  }
+  return "$";  // fallback
 }
 
 // Precedence check function (decides shift or reduce based on precedence table)
 void dispstack() {
-  for (int j = 0; j <= top; j++) printf("%c", lStack[j]);
+  for (const auto &s : lStack) cout << s;
 }
 
 void dispinput() {
-  for (int j = i; j < l; j++) printf("%c", *(input + j));
+  for (size_t j = i; j < inputTokens.size(); ++j) cout << inputTokens[j];
 }
 
 int main() {
@@ -242,34 +246,55 @@ int main() {
 
   int j;
 
-  input = (char *)malloc(50 * sizeof(char));
-  printf("\nEnter the string\n");
-  scanf("%s", input);
-  input = strcat(input, "$");
-  l = strlen(input);
-  strcpy(lStack, "$");
-  printf("\nSTACK\tINPUT\tACTION");
-  while (i <= l) {
+  string userInput;
+  cout << "\nEnter the string:\n";
+  // cin >> userInput;
+  userInput = "i+i^i";
+
+  inputTokens = split(userInput);
+  inputTokens.push_back("$");
+
+  lStack.clear();
+  lStack.push_back("$");
+
+  cout << "\nSTACK\tINPUT\tACTION";
+
+  while (i < inputTokens.size()) {
     shift();
-    printf("\n");
+    cout << "\n";
     dispstack();
-    printf("\t");
+    cout << "\t";
     dispinput();
-    printf("\tShift");
-    if (precedenceTable[{std::string(1, lStack[top]),
-                         std::string(1, input[i])}] == '>') {
-      while (reduce()) {
-        printf("\n");
+    cout << "\tShift";
+
+    while (true) {
+      string stackTop = findLastTerminal(lStack);
+      string currentInput = (i < inputTokens.size()) ? inputTokens[i] : "$";
+      char precedence = getPrecedence(stackTop, currentInput);
+
+      if (precedence == '>' && reduce()) {
+        cout << "\n";
         dispstack();
-        printf("\t");
+        cout << "\t";
         dispinput();
-        printf("\tReduced: E->%s", lasthandle);
+        cout << "\tReduced: E->" << lasthandle;
+      } else if ((precedence == '<' || precedence == '=') &&
+                 i < inputTokens.size()) {
+        shift();
+        cout << "\n";
+        dispstack();
+        cout << "\t";
+        dispinput();
+        cout << "\tShift";
+      } else {
+        break;
       }
     }
   }
 
-  if (strcmp(lStack, "$E$") == 0)
-    printf("\nAccepted;");
+  if (lStack.size() == 3 && lStack[0] == "$" && lStack[1] == startSymbol &&
+      lStack[2] == "$")
+    cout << "\nAccepted;\n";
   else
-    printf("\nNot Accepted;");
+    cout << "\nNot Accepted;\n";
 }
