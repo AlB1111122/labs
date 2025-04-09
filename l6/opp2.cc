@@ -9,10 +9,7 @@ using namespace std;
 
 char *input;
 int i = 0;
-char lasthandle[6], lStack[50],
-    handles[][5] = {")E(", "E*E", "E+E", "i", "E^E"};
-//(E) becomes )E( when pushed to lStack
-
+char lasthandle[6], lStack[50];
 map<string, vector<string>> grammar;
 set<string> nonTerminals, terminals;
 map<pair<string, string>, char> precedenceTable;
@@ -29,8 +26,7 @@ vector<string> split(const string &str) {
         tokens.push_back(token);
         token.clear();
       }
-      // check if valid operator
-    } else if (!isalnum(ch) || ch == '$' || isspace(ch)) {
+    } else if (!isalnum(ch) || ch == '$') {
       if (!token.empty()) {
         tokens.push_back(token);
         token.clear();
@@ -50,7 +46,6 @@ map<string, string> firstCache;
 // Compute FIRST terminal of a symbol (for terminals: itself)
 string firstTerminal(const string &symbol, set<string> &visited) {
   if (visited.count(symbol)) {
-    // We've already visited this symbol, so avoid infinite recursion
     return "";
   }
 
@@ -68,7 +63,6 @@ string firstTerminal(const string &symbol, set<string> &visited) {
     if (!symbols.empty()) {
       string first = firstTerminal(symbols[0], visited);
       if (!first.empty()) {
-        // Cache the result
         firstCache[symbol] = first;
         return first;
       }
@@ -177,39 +171,38 @@ int shift() {
 }
 
 int reduce() {
-  int i, len, found, t;
-  for (i = 0; i < 5; i++)  // selecting handles
-  {
-    len = strlen(handles[i]);
-    if (lStack[top] == handles[i][0] && top + 1 >= len) {
-      found = 1;
-      for (t = 0; t < len; t++) {
-        if (lStack[top - t] != handles[i][t]) {
-          found = 0;
-          break;
+  for (const auto &[head, prods] : grammar) {
+    for (auto prod : prods) {
+      auto symbols = split(prod);
+      int len = symbols.size();
+      if (len <= top) {
+        bool match = true;
+        for (int t = 0; t < len; ++t) {
+          if (lStack[top - t] != symbols[len - t - 1][0]) {
+            match = false;
+            break;
+          }
         }
-      }
-      if (found == 1) {
-        lStack[top - t + 1] = 'E';
-        top = top - t + 1;
-        strcpy(lasthandle, handles[i]);
-        lStack[top + 1] = '\0';
-        return 1;  // successful reduction
+        if (match) {
+          lStack[top - len + 1] = head[0];  // Use head of production
+          top = top - len + 1;
+          strcpy(lasthandle, prod.c_str());
+          lStack[top + 1] = '\0';
+          return 1;  // Successful reduction
+        }
       }
     }
   }
   return 0;
 }
-// Precedence check function (decides shift or reduce based on precedence table)
 
+// Precedence check function (decides shift or reduce based on precedence table)
 void dispstack() {
-  int j;
-  for (j = 0; j <= top; j++) printf("%c", lStack[j]);
+  for (int j = 0; j <= top; j++) printf("%c", lStack[j]);
 }
 
 void dispinput() {
-  int j;
-  for (j = i; j < l; j++) printf("%c", *(input + j));
+  for (int j = i; j < l; j++) printf("%c", *(input + j));
 }
 
 int main() {
