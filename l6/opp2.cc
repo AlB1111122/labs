@@ -7,9 +7,8 @@
 #include <string>
 using namespace std;
 
-char *input;
 int i = 0;
-char lasthandle[6];
+string lasthandle;
 vector<string> lStack;
 vector<string> inputTokens;
 map<string, vector<string>> grammar;
@@ -18,77 +17,72 @@ map<pair<string, string>, char> precedenceTable;
 string startSymbol;
 int top = 0, l;
 
-// Helper to split string by space
 vector<string> split(const string &str) {
   vector<string> tokens;
   string token;
   for (char ch : str) {
     if (isspace(ch)) {
       if (!token.empty()) {
-        tokens.push_back(token);
+        tokens.emplace_back(token);
         token.clear();
       }
     } else if (!isalnum(ch) || ch == '$') {
       if (!token.empty()) {
-        tokens.push_back(token);
+        tokens.emplace_back(token);
         token.clear();
       }
-      tokens.push_back(string(1, ch));  // add operator/paren as separate token
+      tokens.emplace_back(
+          string(1, ch));  // add operator/parenthases as separate token
     } else {
       token += ch;
     }
   }
   if (!token.empty()) {
-    tokens.push_back(token);
+    tokens.emplace_back(token);
   }
   return tokens;
 }
 
-map<string, string> firstCache;
-// Compute FIRST terminal of a symbol (for terminals: itself)
-string firstTerminal(const string &symbol, set<string> &visited) {
-  if (visited.count(symbol)) {
-    return "";
-  }
+set<string> firstTerminals(const string &nonTerminal, set<string> &visited) {
+  if (visited.count(nonTerminal)) return {};
+  visited.insert(nonTerminal);
 
-  // Mark this symbol as visited
-  visited.insert(symbol);
-
-  // If it's a terminal, return it immediately
-  if (terminals.count(symbol)) {
-    return symbol;
-  }
-
-  // Otherwise, process its production rules
-  for (auto prod : grammar[symbol]) {
+  set<string> result;
+  for (auto &prod : grammar[nonTerminal]) {
     auto symbols = split(prod);
     if (!symbols.empty()) {
-      string first = firstTerminal(symbols[0], visited);
-      if (!first.empty()) {
-        firstCache[symbol] = first;
-        return first;
+      string first = symbols[0];
+      if (terminals.count(first)) {
+        result.insert(first);
+      } else if (nonTerminals.count(first)) {
+        auto subFirsts = firstTerminals(first, visited);
+        result.insert(subFirsts.begin(), subFirsts.end());
       }
     }
   }
-
-  // If no terminal found, return an empty string
-  return "";
+  return result;
 }
 
-// Compute LAST terminal of a symbol
-string lastTerminal(const string &symbol) {
-  if (terminals.count(symbol)) return symbol;
-  for (auto prod : grammar[symbol]) {
+set<string> lastTerminals(const string &nonTerminal, set<string> &visited) {
+  set<string> result;
+  if (visited.count(nonTerminal)) return result;
+  visited.insert(nonTerminal);
+
+  for (auto &prod : grammar[nonTerminal]) {
     auto symbols = split(prod);
     if (!symbols.empty()) {
-      string last = lastTerminal(symbols.back());
-      if (!last.empty()) return last;
+      string last = symbols.back();
+      if (terminals.count(last)) {
+        result.insert(last);
+      } else if (nonTerminals.count(last)) {
+        auto subLasts = lastTerminals(last, visited);
+        result.insert(subLasts.begin(), subLasts.end());
+      }
     }
   }
-  return "";
+  return result;
 }
 
-// Build operator precedence table
 void buildPrecedenceTable() {
   if (grammar.empty()) {
     cout << "Grammar is empty!\n";
@@ -106,27 +100,35 @@ void buildPrecedenceTable() {
 
         if (terminals.count(a) && nonTerminals.count(b)) {
           set<string> visited;
-          string first = firstTerminal(b, visited);
-          if (!first.empty()) precedenceTable[{a, first}] = '<';
+          auto firsts = firstTerminals(b, visited);
+          for (const auto &first : firsts) {
+            precedenceTable[{a, first}] = '<';
+          }
         }
 
         if (nonTerminals.count(a) && terminals.count(b)) {
-          string last = lastTerminal(a);
-          if (!last.empty()) precedenceTable[{last, b}] = '>';
+          set<string> visited;
+          auto lasts = lastTerminals(a, visited);
+          for (const auto &last : lasts) {
+            precedenceTable[{last, b}] = '>';
+          }
         }
 
         if (nonTerminals.count(a) && nonTerminals.count(b)) {
-          string last = lastTerminal(a);
           set<string> visited;
-          string first = firstTerminal(b, visited);
-          if (!last.empty() && !first.empty())
-            precedenceTable[{last, first}] = '>';
+          auto lasts = lastTerminals(a, visited);
+          auto firsts = firstTerminals(b, visited);
+          for (const auto &last : lasts) {
+            for (const auto &first : firsts) {
+              precedenceTable[{last, first}] = '>';
+            }
+          }
         }
       }
     }
   }
 
-  // Add special symbols
+  // Add special $
   for (const auto &t : terminals) {
     precedenceTable[{"$", t}] = '<';
     precedenceTable[{t, "$"}] = '>';
@@ -134,7 +136,6 @@ void buildPrecedenceTable() {
   precedenceTable[{"$", "$"}] = '=';
 }
 
-// Print the operator precedence table
 void printPrecedenceTable() {
   cout << "\nOperator Precedence Table:\n";
   cout << setw(10) << left << " ";
@@ -151,7 +152,6 @@ void printPrecedenceTable() {
     cout << "\n";
   }
 
-  // Row for $
   cout << setw(10) << left << "$";
   for (const auto &col : terminals) {
     cout << setw(5) << left << precedenceTable[{"$", col}];
@@ -160,20 +160,19 @@ void printPrecedenceTable() {
   cout << "\n";
 }
 
-// Get precedence relation
 char getPrecedence(const string &a, const string &b) {
   auto it = precedenceTable.find({a, b});
   if (it != precedenceTable.end()) return it->second;
   return ' ';
 }
 
-void shift() { lStack.push_back(inputTokens[i++]); }
+void shift() { lStack.emplace_back(inputTokens[i++]); }
 
 bool reduce() {
   for (const auto &[head, prods] : grammar) {
-    for (auto prod : prods) {
+    for (auto const &prod : prods) {
       auto symbols = split(prod);
-      int len = symbols.size();
+      unsigned long len = symbols.size();
       if (len <= lStack.size()) {
         bool match = true;
         for (int t = 0; t < len; ++t) {
@@ -184,36 +183,78 @@ bool reduce() {
         }
         if (match) {
           lStack.erase(lStack.end() - len, lStack.end());
-          lStack.push_back(head);
-          strcpy(lasthandle, prod.c_str());
-          return true;  // successful reduction
+          lStack.emplace_back(head);
+          lasthandle = prod.c_str();
+          return true;
         }
       }
     }
   }
   return false;
 }
+
 string findLastTerminal(const vector<string> &stack) {
+  if (stack.empty()) return "$";
+
   for (int idx = stack.size() - 1; idx >= 0; --idx) {
-    if (terminals.count(stack[idx]) || stack[idx] == "$") return stack[idx];
+    if (terminals.count(stack[idx]) || stack[idx] == "$") {
+      return stack[idx];
+    }
   }
-  return "$";  // fallback
+  return "$";
 }
 
-// Precedence check function (decides shift or reduce based on precedence table)
-void dispstack() {
+void displayStack() {
   for (const auto &s : lStack) cout << s;
 }
 
-void dispinput() {
+void displayInput() {
   for (size_t j = i; j < inputTokens.size(); ++j) cout << inputTokens[j];
+}
+
+void parse() {
+  cout << "\nSTACK\tINPUT STRING\tACTION";
+  while (i < inputTokens.size()) {
+    shift();
+    cout << "\n";
+    displayStack();
+    cout << "\t";
+    displayInput();
+    cout << "\tShift";
+
+    while (true) {
+      string stackTop = findLastTerminal(lStack);
+      string currentInput = (i < inputTokens.size()) ? inputTokens[i] : "$";
+      char precedence = getPrecedence(stackTop, currentInput);
+
+      if (precedence == '>' && reduce()) {
+        cout << "\n";
+        displayStack();
+        cout << "\t";
+        displayInput();
+        cout << "\tReduced: E->" << lasthandle;
+      } else if ((precedence == '<' || precedence == '=') &&
+                 i < inputTokens.size()) {
+        shift();
+        cout << "\n";
+        displayStack();
+        cout << "\t";
+        displayInput();
+        cout << "\tShift";
+      } else {
+        break;
+      }
+    }
+  }
 }
 
 int main() {
   cout << "Enter grammar (space-separated, e.g., E -> E + T | T):\n";
   string line;
 
-  stringstream ss1("E -> i | E*E | E+E | (E) | E^E");
+  stringstream ss1(
+      "E -> E - T | T\nT -> T / F | F\nF -> F ^ G | G\nG -> ( E ) | id | num");
+  cout << ss1.str() << endl;
 
   while (getline(ss1, line)) {
     if (line.empty()) break;
@@ -226,15 +267,14 @@ int main() {
     stringstream ss(bodies);
     string prod;
     while (getline(ss, prod, '|')) {
-      grammar[head].push_back(prod);
+      grammar[head].emplace_back(prod);
     }
   }
 
   startSymbol = grammar.begin()->first;
 
-  // Extract terminals
-  for (auto &[head, prods] : grammar) {
-    for (auto prod : prods) {
+  for (auto const &[head, prods] : grammar) {
+    for (auto const &prod : prods) {
       for (auto token : split(prod)) {
         if (!isupper(token[0]) && token != "ε") terminals.insert(token);
       }
@@ -244,53 +284,19 @@ int main() {
   buildPrecedenceTable();
   printPrecedenceTable();
 
-  int j;
-
   string userInput;
   cout << "\nEnter the string:\n";
   // cin >> userInput;
-  userInput = "i+i^i";
+  userInput = "id-num^id";
+  cout << userInput << endl;
 
   inputTokens = split(userInput);
-  inputTokens.push_back("$");
+  inputTokens.emplace_back("$");
 
   lStack.clear();
-  lStack.push_back("$");
+  lStack.emplace_back("$");
 
-  cout << "\nSTACK\tINPUT\tACTION";
-
-  while (i < inputTokens.size()) {
-    shift();
-    cout << "\n";
-    dispstack();
-    cout << "\t";
-    dispinput();
-    cout << "\tShift";
-
-    while (true) {
-      string stackTop = findLastTerminal(lStack);
-      string currentInput = (i < inputTokens.size()) ? inputTokens[i] : "$";
-      char precedence = getPrecedence(stackTop, currentInput);
-
-      if (precedence == '>' && reduce()) {
-        cout << "\n";
-        dispstack();
-        cout << "\t";
-        dispinput();
-        cout << "\tReduced: E->" << lasthandle;
-      } else if ((precedence == '<' || precedence == '=') &&
-                 i < inputTokens.size()) {
-        shift();
-        cout << "\n";
-        dispstack();
-        cout << "\t";
-        dispinput();
-        cout << "\tShift";
-      } else {
-        break;
-      }
-    }
-  }
+  parse();
 
   if (lStack.size() == 3 && lStack[0] == "$" && lStack[1] == startSymbol &&
       lStack[2] == "$")

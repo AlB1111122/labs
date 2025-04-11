@@ -1,0 +1,15 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-g",
+      "-o",
+      "opp",
+      "opp2.cc"
+    ],
+    "directory": "/home/a/Documents/school/y4s2/ProgrammingLanguageTech/labs/l6",
+    "file": "/home/a/Documents/school/y4s2/ProgrammingLanguageTech/labs/l6/opp2.cc",
+    "output": "/home/a/Documents/school/y4s2/ProgrammingLanguageTech/labs/l6/opp"
+  }
+]
