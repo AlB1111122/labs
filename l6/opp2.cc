@@ -136,28 +136,57 @@ void buildPrecedenceTable() {
   precedenceTable[{"$", "$"}] = '=';
 }
 
-void printPrecedenceTable() {
-  cout << "\nOperator Precedence Table:\n";
-  cout << setw(10) << left << " ";
-  for (const auto &t : terminals) cout << setw(5) << left << t;
-  cout << setw(5) << left << "$";
-  cout << "\n" << string(10 + (terminals.size() + 1) * 5, '-') << "\n";
+void parseInputString(const string &inputString) {
+  stack<char> S;
+  string input = inputString + "$";  // Append $ to mark the end of input
+  S.push('$');                       // Start with $ symbol in the stack
 
-  for (const auto &row : terminals) {
-    cout << setw(10) << left << row;
-    for (const auto &col : terminals) {
-      cout << setw(5) << left << precedenceTable[{row, col}];
+  cout << "\nParsing input string: " << input << endl;
+
+  int i = 0;  // Input string pointer
+
+  // Print column headers with consistent width
+  cout << left << setw(30) << "Stack" << setw(30) << "Input String" << setw(30)
+       << "Action" << endl;
+
+  while (true) {
+    char top = S.top();       // Get top element from the stack
+    char current = input[i];  // Get the current character from the input string
+
+    // Print the stack contents in reverse order (top first)
+    cout << "Stack: ";
+    stack<char> temp = S;
+    string stackContent = "";
+    while (!temp.empty()) {
+      stackContent = temp.top() + stackContent;
+      temp.pop();
     }
-    cout << setw(5) << left << precedenceTable[{row, "$"}];
-    cout << "\n";
-  }
 
-  cout << setw(10) << left << "$";
-  for (const auto &col : terminals) {
-    cout << setw(5) << left << precedenceTable[{"$", col}];
+    // Print the current stack, input string, and the action
+    cout << left << setw(30) << stackContent << setw(30) << input.substr(i)
+         << setw(30);
+
+    // Determine the precedence action
+    char precedence = precedenceTable[{top, current}];
+
+    if (top == '$' && current == '$') {
+      cout << "Parsing completed!" << endl;
+      break;
+    } else if (precedence == '<') {
+      cout << "Shift: " << current << endl;
+      S.push(current);
+      i++;
+    } else if (precedence == '>') {
+      cout << "Reduce: " << top << endl;
+      S.pop();
+    } else if (precedence == '=') {
+      cout << "Accepting input" << endl;
+      break;
+    } else {
+      cout << "Error: Invalid\n" << endl;
+      break;
+    }
   }
-  cout << setw(5) << left << precedenceTable[{"$", "$"}];
-  cout << "\n";
 }
 
 char getPrecedence(const string &a, const string &b) {

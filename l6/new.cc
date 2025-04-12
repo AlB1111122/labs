@@ -51,16 +51,18 @@ void fillOPT() {
 
 void parseInputString(const string &inputString) {
   stack<char> S;
-  string input = inputString + "$";  // Append $ to mark the end of input
-  S.push('$');                       // Start with $ symbol in the stack
+  string input = inputString + "$";
+  S.push('$');
 
   cout << "\nParsing input string: " << input << endl;
 
-  int i = 0;  // Input string pointer
+  cout << "\nSTACK\tINPUT STRING\tACTION\n";
+
+  int i = 0;
 
   while (true) {
-    char top = S.top();       // Get top element from the stack
-    char current = input[i];  // Get the current character from the input string
+    char top = S.top();
+    char current = input[i];
 
     cout << "Stack: ";
     stack<char> temp = S;
@@ -68,9 +70,9 @@ void parseInputString(const string &inputString) {
       cout << temp.top() << " ";
       temp.pop();
     }
-    cout << endl;
+    cout << "\t";
 
-    cout << "Input: " << input.substr(i) << endl;
+    cout << "Input: " << input.substr(i) << "\t";
 
     if (top == '$' && current == '$') {
       cout << "Parsing completed!" << endl;
@@ -86,10 +88,10 @@ void parseInputString(const string &inputString) {
       cout << "Reduce: " << top << endl;
       S.pop();
     } else if (precedence == '=') {
-      cout << "Accepting input\n";
+      cout << "Accepted\n";
       break;
     } else {
-      cout << "Error: Invalid\n" << endl;
+      cout << "Rejected\n" << endl;
       break;
     }
   }
