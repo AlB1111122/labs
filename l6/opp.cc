@@ -98,9 +98,9 @@ void parseInputString(const string &inputString) {
 }
 
 int main() {
-  string terminalsStr = "+*i";
+  string terminalsStr;
   cout << "Enter the terminals (single char each no spaces $ is reserved):\n";
-  //   cin >> terminalsStr;
+  cin >> terminalsStr;
   if (terminalsStr.find('$') != string::npos) {
     cout << "$ is reserved do not enter it\n";
     return 1;
@@ -110,20 +110,19 @@ int main() {
     terminals.emplace(ch);
   }
 
-  //   cout << "Enter the table values (>, <, or =): ";
-  //   for (char &chR : terminalsStr) {
-  //     for (char &chL : terminalsStr) {
-  //       string in;
-  //       cout << "\nEnter the table value for " << chR << " " << chL << ": ";
-  //       cin >> in;
-  //       if (in != ">" && in != "<" && in != "=") {
-  //         cout << "\nInvalid input\n";
-  //         return 1;
-  //       }
-  //       precedenceTable[{chR, chL}] = in[0];
-  //     }
-  //   }
-  fillOPT();
+  cout << "Enter the table values (>, <, or =): ";
+  for (char &chR : terminalsStr) {
+    for (char &chL : terminalsStr) {
+      string in;
+      cout << "\nEnter the table value for " << chR << " " << chL << ": ";
+      cin >> in;
+      if (in != ">" && in != "<" && in != "=") {
+        cout << "\nInvalid input\n";
+        return 1;
+      }
+      precedenceTable[{chR, chL}] = in[0];
+    }
+  }
 
   for (const auto &t : terminals) {
     precedenceTable[{'$', t}] = '<';
@@ -133,9 +132,9 @@ int main() {
 
   printPrecedenceTable();
 
-  string inputString = "i+i*i";
+  string inputString;
   cout << "\nEnter input string: ";
-  //   cin >> inputString;
+  cin >> inputString;
 
   parseInputString(inputString);
 }
