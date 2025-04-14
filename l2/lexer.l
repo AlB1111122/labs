@@ -9,7 +9,6 @@ short | signed | sizeof | static | struct | switch | typedef | union | unsigned 
 void | volatile | while { printf("Keyword: %s\n", yytext); }
 [a-zA-Z_][a-zA-Z0-9_]* { printf("Identifier: %s\n", yytext); }
 [0-9]+ { printf("Number: %s\n", yytext); }
-[0-9]+\.[0-9]+([eE][-+]?[0-9]+)? { printf("Float: %s\n", yytext); }
 [\+\-\*/%] { printf("Operator (arithmatic): %s\n", yytext); }
 [\>\<\>=\<=\!=\==] { printf("Operator (relational): %s\n", yytext); }
 [+\-*/]?= { printf("Operator (asignment): %s\n", yytext); }
