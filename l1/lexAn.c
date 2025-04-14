@@ -54,23 +54,37 @@ int isIdentifier(char *str) {
   return 1;
 }
 
-int isInteger(char *str) {
+int isNum(char *str) {
   int i = 0;
+  int hasDigits = 0;
+  int hasDot = 0;
 
-  if ((str[0] == '-' || str[0] == '+') && isdigit(str[1])) {
+  if (str[i] == '-' || str[i] == '+') {
     i++;
   }
 
   while (isdigit(str[i])) {
+    hasDigits = 1;
     i++;
   }
-  return str[i] == '\0';
+
+  if (str[i] == '.') {
+    hasDot = 1;
+    i++;
+
+    while (isdigit(str[i])) {
+      hasDigits = 1;
+      i++;
+    }
+  }
+
+  return hasDigits && str[i] == '\0';
 }
 
 void isString(const char *input, int *index) {
   char lexeme[510];
   int idx = 0;
-  (*index)++; // skip past first quote
+  (*index)++;
 
   while (input[*index] != '\0' && input[*index] != '"') {
     if (idx < 509) {
@@ -83,6 +97,24 @@ void isString(const char *input, int *index) {
   printf("String Literal: \"%s\"\n", lexeme);
 }
 
+void skipSingleLineComment(const char *input, int *index) {
+  (*index) += 2;
+  while (input[*index] != '\0' && input[*index] != '\n') {
+    (*index)++;
+  }
+}
+
+void skipMultiLineComment(const char *input, int *index) {
+  (*index) += 2;
+  while (input[*index] != '\0' &&
+         !(input[*index] == '*' && input[*index + 1] == '/')) {
+    (*index)++;
+  }
+  if (input[*index] != '\0') {
+    (*index) += 2;
+  }
+}
+
 void lexer(char *input) {
   char lexeme[510];
   int idx = 0;
@@ -90,6 +122,15 @@ void lexer(char *input) {
   int inString = 0;
 
   for (int i = 0; i <= len; i++) {
+
+    if (input[i] == '/' && input[i + 1] == '/') {
+      skipSingleLineComment(input, &i);
+      continue;
+    } else if (input[i] == '/' && input[i + 1] == '*') {
+      skipMultiLineComment(input, &i);
+      continue;
+    }
+
     if (input[i] == '"') {
       isString(input, &i);
       continue;
@@ -101,8 +142,8 @@ void lexer(char *input) {
 
         if (isType(lexeme, keywords, nKeywords)) {
           printf("Keyword: %s\n", lexeme);
-        } else if (isInteger(lexeme)) {
-          printf("Integer: %s\n", lexeme);
+        } else if (isNum(lexeme)) {
+          printf("Number: %s\n", lexeme);
         } else if (isIdentifier(lexeme)) {
           printf("Identifier: %s\n", lexeme);
         } else if (isType(lexeme, relationalOperators, nRelOp)) {
@@ -128,41 +169,33 @@ void lexer(char *input) {
     }
   }
 }
+//"int a = 10;\n if (a >= -5) a = a + 1;\n char str[] = \"Hello, world!\";";
 
 int main() {
-  char *input = NULL;
-  size_t size = 0;
-  size_t len = 0;
-
-  printf("Enter your code (end input with an empty line) e.g. int a = 10;\n if "
-         "(a >= -5) a = a + 1;\n char str[] = \"Hello, world!\"; :\n");
-
-  char buffer[1024];
-  while (fgets(buffer, sizeof(buffer), stdin)) {
-    if (strcmp(buffer, "\n") == 0)
-      break; // Stop on empty line
-
-    size_t buffer_len = strlen(buffer);
-    char *new_input =
-        realloc(input, len + buffer_len + 1); // +1 for null terminator
-    if (!new_input) {
-      fprintf(stderr, "Memory allocation error!\n");
-      free(input);
-      return 1;
-    }
-    input = new_input;
-
-    memcpy(input + len, buffer, buffer_len);
-    len += buffer_len;
-    input[len] = '\0'; // Null terminate
+  FILE *file = fopen("input.txt", "r");
+  if (file == NULL) {
+    perror("Error opening file");
+    return 1;
   }
 
-  if (input) {
-    lexer(input);
-    free(input);
-  } else {
-    printf("No input provided.\n");
+  fseek(file, 0, SEEK_END);
+  long length = ftell(file);
+  rewind(file);
+
+  char *input = malloc(length + 1);
+  if (input == NULL) {
+    perror("Memory allocation failed");
+    fclose(file);
+    return 1;
   }
 
+  size_t readSize = fread(input, 1, length, file);
+  input[readSize] = '\0';
+
+  fclose(file);
+
+  lexer(input);
+
+  free(input);
   return 0;
 }

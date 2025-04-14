@@ -1,3 +1,4 @@
-int a = 10;
-if (a >= -5) a = a + 1;
-char str[] = "Hello, world!";
+void main(){
+// hello world
+int a = 7, b = 7.35;
+}
