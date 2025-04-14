@@ -35,19 +35,19 @@ void printPrecedenceTable() {
   cout << "\n";
 }
 
-void fillOPT() {
-  precedenceTable[{'+', '+'}] = '>';
-  precedenceTable[{'+', '*'}] = '<';
-  precedenceTable[{'+', 'i'}] = '<';
+// void fillOPT() {
+//   precedenceTable[{'+', '+'}] = '>';
+//   precedenceTable[{'+', '*'}] = '<';
+//   precedenceTable[{'+', 'i'}] = '<';
 
-  precedenceTable[{'*', '+'}] = '>';
-  precedenceTable[{'*', '*'}] = '>';
-  precedenceTable[{'*', 'i'}] = '<';
+//   precedenceTable[{'*', '+'}] = '>';
+//   precedenceTable[{'*', '*'}] = '>';
+//   precedenceTable[{'*', 'i'}] = '<';
 
-  precedenceTable[{'i', '+'}] = '>';
-  precedenceTable[{'i', '*'}] = '>';
-  precedenceTable[{'i', 'i'}] = '=';
-}
+//   precedenceTable[{'i', '+'}] = '>';
+//   precedenceTable[{'i', '*'}] = '>';
+//   precedenceTable[{'i', 'i'}] = '=';
+// }
 
 void parseInputString(const string &inputString) {
   stack<char> S;
