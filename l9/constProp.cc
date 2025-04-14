@@ -18,7 +18,8 @@ int main() {
   unordered_map<string, string> constants;
   vector<string> lines;
 
-  cout << "Enter lines of code (end with empty line):\n";
+  cout << "Enter lines of code (end with empty line) e.g. = 3 a\n+ a b t1\n+ a "
+          "c t2\n+ t1 t2 t3 :\n";
 
   string line;
   while (getline(cin, line)) {

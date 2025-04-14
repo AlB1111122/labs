@@ -130,8 +130,39 @@ void lexer(char *input) {
 }
 
 int main() {
-  char input[] =
-      "int a = 10;\n if (a >= -5) a = a + 1;\n char str[] = \"Hello, world!\";";
-  lexer(input);
+  char *input = NULL;
+  size_t size = 0;
+  size_t len = 0;
+
+  printf("Enter your code (end input with an empty line) e.g. int a = 10;\n if "
+         "(a >= -5) a = a + 1;\n char str[] = \"Hello, world!\"; :\n");
+
+  char buffer[1024];
+  while (fgets(buffer, sizeof(buffer), stdin)) {
+    if (strcmp(buffer, "\n") == 0)
+      break; // Stop on empty line
+
+    size_t buffer_len = strlen(buffer);
+    char *new_input =
+        realloc(input, len + buffer_len + 1); // +1 for null terminator
+    if (!new_input) {
+      fprintf(stderr, "Memory allocation error!\n");
+      free(input);
+      return 1;
+    }
+    input = new_input;
+
+    memcpy(input + len, buffer, buffer_len);
+    len += buffer_len;
+    input[len] = '\0'; // Null terminate
+  }
+
+  if (input) {
+    lexer(input);
+    free(input);
+  } else {
+    printf("No input provided.\n");
+  }
+
   return 0;
 }

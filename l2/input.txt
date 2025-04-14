@@ -1,0 +1,4 @@
+void main(){
+// hello world
+int a = 7, b = 7.35;
+}
