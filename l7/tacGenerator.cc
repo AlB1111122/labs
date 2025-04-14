@@ -10,7 +10,7 @@ int tempCount = 1;
 
 string getTempVar() { return "t" + to_string(tempCount++); }
 
-void generateTAC(vector<string>& expression) {
+void generateTAC(const vector<string>& expression) {
   stack<string> operands;
   stack<string> operators;
   map<string, string> precedence = {
@@ -53,7 +53,7 @@ void generateTAC(vector<string>& expression) {
   cout << "x = " << operands.top() << endl;
 }
 
-vector<string> tokenize(string expression) {
+vector<string> tokenize(const string& expression) {
   vector<string> tokens;
   stringstream ss(expression);
   string token;
