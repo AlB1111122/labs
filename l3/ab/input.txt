@@ -1,0 +1,2 @@
+valid: x = a + id66b * 3
+invalid: x = 6 $ 7
