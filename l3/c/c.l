@@ -7,6 +7,8 @@
 [0-9]+          { yylval = atoi(yytext); return NUMBER; }
 [ \t]+         { /* Skip whitespace */ }
 [+\-*/%]         { return yytext[0]; } // Operators
+"("              { return '('; } // Opening bracket
+")"              { return ')'; } // Closing bracket
 \n               { return 0; } // End of input (newline)
 .                { printf("INVALID: Unexpected character '%s'\n", yytext); return YYerror; } // Invalid characters
 
