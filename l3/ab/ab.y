@@ -1,6 +1,7 @@
- %{
-    #include<stdio.h>
+%{
+#include<stdio.h>
 %}
+
 %token NUMBER
 %token VARIABLE
 
@@ -9,29 +10,28 @@
 
 %%
 
-S: VARIABLE'='E {
+S: VARIABLE '=' E '\n' {
        printf("\nVALID\n");
        return 0;
      }
-E:E'+'E 
- |E'-'E 
- |E'*'E 
- |E'/'E 
- |E'%'E
+ ;
+
+E: E '+' E 
+ | E '-' E 
+ | E '*' E 
+ | E '/' E 
+ | E '%' E
  | NUMBER 
  | VARIABLE
-;
+ ;
 
 %%
 
-void main()
-{ 
+void main() { 
    printf("\nEnter valid arithmetic expression\n");
    yyparse();
 }
 
-void yyerror()
-{
+void yyerror() {
    printf("\nINVALID\n");
-
 }
