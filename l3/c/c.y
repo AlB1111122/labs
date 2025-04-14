@@ -5,16 +5,15 @@
 %}
 
 %token NUMBER
-%token VARIABLE
 
 %left '+' '-'
 %left '*' '/' '%'
 
 %%
 
-S: VARIABLE '=' E {
-       printf("\nResult: %d\n", $3);
-       return 0;
+S: E { 
+       printf("\nResult: %d\n", $1); 
+       return 0; 
      }
 ;
 
@@ -30,7 +29,6 @@ T: T '*' F   { $$ = $1 * $3; }
 
 F: '(' E ')' { $$ = $2; } 
   | NUMBER   { $$ = $1; } 
-  | VARIABLE { $$ = 0; } 
 ;
 
 %%
