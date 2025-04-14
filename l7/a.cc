@@ -50,7 +50,7 @@ void generateTAC(vector<string>& expression) {
     operands.push(tempVar);
   }
 
-  cout << "result = " << operands.top() << endl;
+  cout << "x = " << operands.top() << endl;
 }
 
 vector<string> tokenize(string expression) {
@@ -66,7 +66,7 @@ vector<string> tokenize(string expression) {
 }
 
 int main() {
-  cout << "Enter the expression : x=";
+  cout << "Enter the expression : x =";
   string expr;
   getline(cin, expr);
   cout << endl;
