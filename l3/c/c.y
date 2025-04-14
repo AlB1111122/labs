@@ -7,7 +7,7 @@
 %token NUMBER
 
 %left '+' '-'
-%left '*' '/' '%'
+%left '*' '/'
 
 %%
 
