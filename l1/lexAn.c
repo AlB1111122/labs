@@ -169,7 +169,6 @@ void lexer(char *input) {
     }
   }
 }
-//"int a = 10;\n if (a >= -5) a = a + 1;\n char str[] = \"Hello, world!\";";
 
 int main() {
   FILE *file = fopen("input.txt", "r");
