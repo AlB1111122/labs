@@ -2,3 +2,9 @@
 + a b t1
 + a c t2
 + t1 t2 t3
+
+= 3 a
+= 18 b
++ a b t1
++ a c t2
++ t1 t2 t3
