@@ -90,7 +90,7 @@ int main() {
 
   printf("Enter the expression : x = ");
   fgets(expr, sizeof(expr), stdin);
-  expr[strcspn(expr, "\n")] = 0;  // Remove newline
+  expr[strcspn(expr, "\n")] = 0;
 
   int count = tokenize(expr, tokens);
 
