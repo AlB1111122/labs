@@ -1,79 +1,100 @@
-#include <iostream>
-#include <map>
-#include <sstream>
-#include <stack>
-#include <vector>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-using namespace std;
+#define MAX_TOKENS 100
+#define MAX_STACK 100
+#define MAX_LEN 100
 
 int tempCount = 1;
 
-string getTempVar() { return "t" + to_string(tempCount++); }
+void getTempVar(char* buffer) { snprintf(buffer, MAX_LEN, "t%d", tempCount++); }
 
-void generateTAC(const vector<string>& expression) {
-  stack<string> operands;
-  stack<string> operators;
-  map<string, string> precedence = {
-      {"+", "1"}, {"-", "1"}, {"*", "2"}, {"/", "2"}};
+typedef struct {
+  char* items[MAX_STACK];
+  int top;
+} Stack;
 
-  for (string token : expression) {
-    if (token == "+" || token == "-" || token == "*" || token == "/") {
-      while (!operators.empty() &&
-             precedence[operators.top()] >= precedence[token]) {
-        string right = operands.top();
-        operands.pop();
-        string left = operands.top();
-        operands.pop();
-        string op = operators.top();
-        operators.pop();
+void initStack(Stack* s) { s->top = -1; }
 
-        string tempVar = getTempVar();
-        cout << tempVar << " = " << left << " " << op << " " << right << endl;
-        operands.push(tempVar);
+int isEmpty(Stack* s) { return s->top == -1; }
+
+void push(Stack* s, const char* item) { s->items[++s->top] = strdup(item); }
+
+char* pop(Stack* s) { return s->items[s->top--]; }
+
+char* peek(Stack* s) { return s->items[s->top]; }
+
+int precedence(const char* op) {
+  if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0) return 1;
+  if (strcmp(op, "*") == 0 || strcmp(op, "/") == 0) return 2;
+  return 0;
+}
+
+void generateTAC(char* tokens[], int count) {
+  Stack operands, operators;
+  initStack(&operands);
+  initStack(&operators);
+
+  for (int i = 0; i < count; i++) {
+    char* token = tokens[i];
+    if (strcmp(token, "+") == 0 || strcmp(token, "-") == 0 ||
+        strcmp(token, "*") == 0 || strcmp(token, "/") == 0) {
+      while (!isEmpty(&operators) &&
+             precedence(peek(&operators)) >= precedence(token)) {
+        char* right = pop(&operands);
+        char* left = pop(&operands);
+        char* op = pop(&operators);
+
+        char tempVar[MAX_LEN];
+        getTempVar(tempVar);
+
+        printf("%s = %s %s %s\n", tempVar, left, op, right);
+        push(&operands, tempVar);
       }
-      operators.push(token);
+      push(&operators, token);
     } else {
-      operands.push(token);
+      push(&operands, token);
     }
   }
 
-  while (!operators.empty()) {
-    string right = operands.top();
-    operands.pop();
-    string left = operands.top();
-    operands.pop();
-    string op = operators.top();
-    operators.pop();
+  while (!isEmpty(&operators)) {
+    char* right = pop(&operands);
+    char* left = pop(&operands);
+    char* op = pop(&operators);
 
-    string tempVar = getTempVar();
-    cout << tempVar << " = " << left << " " << op << " " << right << endl;
-    operands.push(tempVar);
+    char tempVar[MAX_LEN];
+    getTempVar(tempVar);
+
+    printf("%s = %s %s %s\n", tempVar, left, op, right);
+    push(&operands, tempVar);
   }
 
-  cout << "x = " << operands.top() << endl;
+  printf("x = %s\n", pop(&operands));
 }
 
-vector<string> tokenize(const string& expression) {
-  vector<string> tokens;
-  stringstream ss(expression);
-  string token;
-
-  while (ss >> token) {
-    tokens.push_back(token);
+int tokenize(char* expr, char* tokens[]) {
+  int count = 0;
+  char* token = strtok(expr, " ");
+  while (token != NULL) {
+    tokens[count++] = token;
+    token = strtok(NULL, " ");
   }
-
-  return tokens;
+  return count;
 }
 
 int main() {
-  cout << "Enter the expression : x =";
-  string expr;
-  getline(cin, expr);
-  cout << endl;
+  char expr[256];
+  char* tokens[MAX_TOKENS];
 
-  vector<string> tokens = tokenize(expr);
+  printf("Enter the expression : x = ");
+  fgets(expr, sizeof(expr), stdin);
+  expr[strcspn(expr, "\n")] = 0;  // Remove newline
 
-  generateTAC(tokens);
+  int count = tokenize(expr, tokens);
+
+  generateTAC(tokens, count);
 
   return 0;
 }
