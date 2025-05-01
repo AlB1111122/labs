@@ -1,15 +1,15 @@
-#include <chrono>
-#include <iostream>
-using namespace std;
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
-constexpr int SIZE = 1000000;
+#define SIZE 1000000
 
 void sumRegular(int arr[], int size) {
   int sum = 0;
   for (int i = 0; i < size; i++) {
     sum += arr[i];
   }
-  cout << "\nRegular sum: " << sum << endl;
+  printf("\nRegular sum: %d\n", sum);
 }
 
 void sumUnrolled(int arr[], int size) {
@@ -30,7 +30,7 @@ void sumUnrolled(int arr[], int size) {
   for (; i < size; i++) {
     sum += arr[i];
   }
-  cout << "\nUnrolled sum: " << sum << endl;
+  printf("\nUnrolled sum: %d\n", sum);
 }
 
 int main() {
@@ -39,22 +39,22 @@ int main() {
     arr[i] = 1;
   }
 
-  auto start = chrono::high_resolution_clock::now();
+  clock_t start, end;
+
+  start = clock();
   sumRegular(arr, SIZE);
-  auto end = chrono::high_resolution_clock::now();
-  chrono::duration<double, milli> regular_duration = end - start;
-  cout << "Time taken by regular loop: " << regular_duration.count() << " ms"
-       << endl;
+  end = clock();
+  double regular_duration = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+  printf("Time taken by regular loop: %.6f ms\n", regular_duration);
 
-  start = chrono::high_resolution_clock::now();
+  start = clock();
   sumUnrolled(arr, SIZE);
-  end = chrono::high_resolution_clock::now();
-  chrono::duration<double, milli> unrolled_duration = end - start;
-  cout << "Time taken by unrolled loop: " << unrolled_duration.count() << " ms"
-       << endl;
+  end = clock();
+  double unrolled_duration = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+  printf("Time taken by unrolled loop: %.6f ms\n", unrolled_duration);
 
-  cout << "Time saved by unrolling: "
-       << regular_duration.count() - unrolled_duration.count() << " ms" << endl;
+  printf("Time saved by unrolling: %.6f ms\n",
+         regular_duration - unrolled_duration);
 
   return 0;
 }
