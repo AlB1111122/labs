@@ -1,140 +1,157 @@
-#include <bits/stdc++.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <map>
-#include <string>
-using namespace std;
+#define MAX_TERMINALS 10
+#define MAX_INPUT_LEN 100
+#define MAX_STACK_SIZE 100
 
-vector<string> inputTokens;
-map<pair<char, char>, char> precedenceTable;
-set<char> terminals;
+char terminals[MAX_TERMINALS];
+int terminal_count = 0;
+char precedence_table[MAX_TERMINALS + 1][MAX_TERMINALS + 1];  // +1 for $
+char stack[MAX_STACK_SIZE];
+int top = -1;
 
-void printPrecedenceTable() {
-  cout << "\nOperator Precedence Table:\n";
-  cout << setw(10) << left << ' ';
-  for (const auto &t : terminals) cout << setw(5) << left << t;
-  cout << setw(5) << left << '$';
-  cout << "\n" << string(10 + (terminals.size() + 1) * 5, '-') << "\n";
-
-  for (const auto &row : terminals) {
-    cout << setw(10) << left << row;
-    for (const auto &col : terminals) {
-      cout << setw(5) << left << precedenceTable[{row, col}];
-    }
-    cout << setw(5) << left << precedenceTable[{row, '$'}];
-    cout << "\n";
+int get_index(char ch) {
+  if (ch == '$') return terminal_count;
+  for (int i = 0; i < terminal_count; ++i) {
+    if (terminals[i] == ch) return i;
   }
-
-  cout << setw(10) << left << "$";
-  for (const auto &col : terminals) {
-    cout << setw(5) << left << precedenceTable[{'$', col}];
-  }
-  cout << setw(5) << left << precedenceTable[{'$', '$'}];
-  cout << "\n";
+  return -1;
 }
 
-// void fillOPT() {
-//   precedenceTable[{'+', '+'}] = '>';
-//   precedenceTable[{'+', '*'}] = '<';
-//   precedenceTable[{'+', 'i'}] = '<';
+void push(char ch) {
+  if (top < MAX_STACK_SIZE - 1) stack[++top] = ch;
+}
 
-//   precedenceTable[{'*', '+'}] = '>';
-//   precedenceTable[{'*', '*'}] = '>';
-//   precedenceTable[{'*', 'i'}] = '<';
+char pop() {
+  if (top >= 0) return stack[top--];
+  return '\0';
+}
 
-//   precedenceTable[{'i', '+'}] = '>';
-//   precedenceTable[{'i', '*'}] = '>';
-//   precedenceTable[{'i', 'i'}] = '=';
-// }
+char peek() {
+  if (top >= 0) return stack[top];
+  return '\0';
+}
 
-void parseInputString(const string &inputString) {
-  stack<char> S;
-  string input = inputString + "$";
-  S.push('$');
+void print_stack() {
+  for (int i = top; i >= 0; --i) printf("%c ", stack[i]);
+}
 
-  cout << "\nParsing input string: " << input << endl;
+void print_precedence_table() {
+  printf("\nOperator Precedence Table:\n");
+  printf("          ");
+  for (int i = 0; i < terminal_count; ++i) printf("%-5c", terminals[i]);
+  printf("%-5c\n", '$');
 
-  cout << "\nSTACK\tINPUT STRING\tACTION\n";
+  for (int i = 0; i < 10 + 5 * (terminal_count + 1); ++i) printf("-");
+  printf("\n");
+
+  for (int i = 0; i <= terminal_count; ++i) {
+    if (i == terminal_count)
+      printf("%-10c", '$');
+    else
+      printf("%-10c", terminals[i]);
+
+    for (int j = 0; j <= terminal_count; ++j) {
+      printf("%-5c", precedence_table[i][j]);
+    }
+    printf("\n");
+  }
+}
+
+void parse_input_string(char* input) {
+  char augmented_input[MAX_INPUT_LEN];
+  snprintf(augmented_input, sizeof(augmented_input), "%s$", input);
+
+  top = -1;
+  push('$');
 
   int i = 0;
+  printf("\nParsing input string: %s\n", augmented_input);
+  printf("\nSTACK\t\tINPUT STRING\tACTION\n");
 
-  while (true) {
-    char top = S.top();
-    char current = input[i];
+  while (1) {
+    char top_symbol = peek();
+    char current = augmented_input[i];
 
-    cout << "Stack: ";
-    stack<char> temp = S;
-    while (!temp.empty()) {
-      cout << temp.top() << " ";
-      temp.pop();
-    }
-    cout << "\t";
+    print_stack();
+    printf("\t\t%s\t", &augmented_input[i]);
 
-    cout << "Input: " << input.substr(i) << "\t";
-
-    if (top == '$' && current == '$') {
-      cout << "Parsing completed!" << endl;
+    if (top_symbol == '$' && current == '$') {
+      printf("Parsing completed!\n");
       break;
     }
-    char precedence = precedenceTable[{top, current}];
 
-    if (precedence == '<') {
-      cout << "Shift: " << current << endl;
-      S.push(current);
+    int row = get_index(top_symbol);
+    int col = get_index(current);
+
+    if (row == -1 || col == -1) {
+      printf("Invalid symbol encountered.\n");
+      break;
+    }
+
+    char relation = precedence_table[row][col];
+    if (relation == '<') {
+      printf("Shift: %c\n", current);
+      push(current);
       i++;
-    } else if (precedence == '>') {
-      cout << "Reduce: " << top << endl;
-      S.pop();
-    } else if (precedence == '=') {
-      cout << "Accepted\n";
+    } else if (relation == '>') {
+      printf("Reduce: %c\n", top_symbol);
+      pop();
+    } else if (relation == '=') {
+      printf("Accepted\n");
       break;
     } else {
-      cout << "Rejected\n" << endl;
+      printf("Rejected\n");
       break;
     }
   }
 }
 
 int main() {
-  string terminalsStr;
-  cout << "Enter the terminals (single char each no spaces $ is reserved):\n";
-  cin >> terminalsStr;
-  if (terminalsStr.find('$') != string::npos) {
-    cout << "$ is reserved do not enter it\n";
+  char terminal_input[MAX_TERMINALS + 1];
+  printf("Enter the terminals (single char each, no spaces, $ is reserved):\n");
+  scanf("%s", terminal_input);
+
+  if (strchr(terminal_input, '$') != NULL) {
+    printf("$ is reserved. Do not include it.\n");
     return 1;
   }
 
-  for (char &ch : terminalsStr) {
-    terminals.emplace(ch);
+  terminal_count = strlen(terminal_input);
+  for (int i = 0; i < terminal_count; ++i) {
+    terminals[i] = terminal_input[i];
   }
 
-  cout << "Enter the table values (>, <, or =): ";
-  for (char &chR : terminalsStr) {
-    for (char &chL : terminalsStr) {
-      string in;
-      cout << "\nEnter the table value for " << chR << " " << chL << ": ";
-      cin >> in;
-      if (in != ">" && in != "<" && in != "=") {
-        cout << "\nInvalid input\n";
+  printf("Enter the table values (>, <, or =):\n");
+  for (int i = 0; i < terminal_count; ++i) {
+    for (int j = 0; j < terminal_count; ++j) {
+      char rel[2];
+      printf("Enter value for %c %c: ", terminals[i], terminals[j]);
+      scanf("%s", rel);
+      if (rel[0] != '<' && rel[0] != '>' && rel[0] != '=') {
+        printf("Invalid input.\n");
         return 1;
       }
-      precedenceTable[{chR, chL}] = in[0];
+      precedence_table[i][j] = rel[0];
     }
   }
 
-  for (const auto &t : terminals) {
-    precedenceTable[{'$', t}] = '<';
-    precedenceTable[{t, '$'}] = '>';
+  // Fill $ row and column
+  for (int i = 0; i < terminal_count; ++i) {
+    precedence_table[terminal_count][i] = '<';  // $ vs terminal
+    precedence_table[i][terminal_count] = '>';  // terminal vs $
   }
-  precedenceTable[{'$', '$'}] = '=';
+  precedence_table[terminal_count][terminal_count] = '=';  // $ vs $
 
-  printPrecedenceTable();
+  print_precedence_table();
 
-  string inputString;
-  cout << "\nEnter input string: ";
-  cin >> inputString;
+  char input_string[MAX_INPUT_LEN];
+  printf("\nEnter input string: ");
+  scanf("%s", input_string);
 
-  parseInputString(inputString);
+  parse_input_string(input_string);
+
+  return 0;
 }
