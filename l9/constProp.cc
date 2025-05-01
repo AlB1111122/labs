@@ -1,67 +1,106 @@
-#include <iostream>
-#include <sstream>
-#include <unordered_map>
-#include <vector>
-using namespace std;
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-vector<string> tokenize(const string &line) {
-  vector<string> tokens;
-  stringstream ss(line);
-  string token;
-  while (ss >> token) {
-    tokens.push_back(token);
+#define MAX_LINES 100
+#define MAX_TOKENS 4
+#define MAX_VARIABLES 100
+#define MAX_STRING_LENGTH 100
+
+typedef struct {
+  char variable[MAX_STRING_LENGTH];
+  char value[MAX_STRING_LENGTH];
+} Variable;
+
+Variable constants[MAX_VARIABLES];
+int constant_count = 0;
+
+int tokenize(char* line, char* tokens[]) {
+  int count = 0;
+  char* token = strtok(line, " ");
+  while (token != NULL) {
+    tokens[count++] = token;
+    token = strtok(NULL, " ");
   }
-  return tokens;
+  return count;
+}
+
+int isConstant(char* str) {
+  for (int i = 0; str[i] != '\0'; i++) {
+    if (!isdigit(str[i])) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+char* getConstantValue(char* variable) {
+  for (int i = 0; i < constant_count; i++) {
+    if (strcmp(constants[i].variable, variable) == 0) {
+      return constants[i].value;
+    }
+  }
+  return NULL;
 }
 
 int main() {
-  unordered_map<string, string> constants;
-  vector<string> lines;
+  char* lines[MAX_LINES];
+  char line[MAX_STRING_LENGTH];
+  int line_count = 0;
 
-  cout << "Enter lines of code (end with empty line) e.g. = 3 a\n+ a b t1\n+ a "
-          "c t2\n+ t1 t2 t3 :\n";
+  printf(
+      "Enter lines of code (end with empty line) e.g. = 3 a\n+ a b t1\n+ a c "
+      "t2\n+ t1 t2 t3 :\n");
 
-  string line;
-  while (getline(cin, line)) {
-    if (line.empty()) break;
-    lines.push_back(line);
+  while (fgets(line, sizeof(line), stdin)) {
+    line[strcspn(line, "\n")] = 0;
+    if (strlen(line) == 0) {
+      break;
+    }
+    lines[line_count] = strdup(line);
+    line_count++;
   }
 
-  cout << "\nPropagated code:\n";
+  printf("\nPropagated code:\n");
 
-  for (const string &code : lines) {
-    vector<string> tokens = tokenize(code);
+  for (int i = 0; i < line_count; i++) {
+    char* tokens[MAX_TOKENS];
+    int token_count = tokenize(lines[i], tokens);
 
-    if (tokens.size() == 4) {
-      string op = tokens[0];
-      string arg1 = tokens[1];
-      string arg2 = tokens[2];
-      string result = tokens[3];
+    if (token_count == 4) {
+      char* op = tokens[0];
+      char* arg1 = tokens[1];
+      char* arg2 = tokens[2];
+      char* result = tokens[3];
 
-      if (constants.find(arg1) != constants.end()) arg1 = constants[arg1];
-      if (constants.find(arg2) != constants.end()) arg2 = constants[arg2];
+      if (getConstantValue(arg1)) arg1 = getConstantValue(arg1);
+      if (getConstantValue(arg2)) arg2 = getConstantValue(arg2);
 
-      cout << op << " " << arg1 << " " << arg2 << " " << result << endl;
-    } else if (tokens.size() == 3 && tokens[0] == "=") {
-      string value = tokens[1];
-      string variable = tokens[2];
+      printf("%s %s %s %s\n", op, arg1, arg2, result);
+    } else if (token_count == 3 && strcmp(tokens[0], "=") == 0) {
+      char* value = tokens[1];
+      char* variable = tokens[2];
 
-      bool isConstant = true;
-      for (char ch : value) {
-        if (!isdigit(ch)) {
-          isConstant = false;
-          break;
+      if (isConstant(value)) {
+        strcpy(constants[constant_count].variable, variable);
+        strcpy(constants[constant_count].value, value);
+        constant_count++;
+        printf("%s %s %s\n", tokens[0], value, variable);
+      } else {
+        char* resolved_value = getConstantValue(value);
+        if (resolved_value) {
+          strcpy(constants[constant_count].variable, variable);
+          strcpy(constants[constant_count].value, resolved_value);
+          constant_count++;
+          printf("%s %s %s\n", tokens[0], resolved_value, variable);
         }
       }
-
-      if (isConstant) {
-        constants[variable] = value;
-      } else if (constants.find(value) != constants.end()) {
-        constants[variable] = constants[value];
-      }
-
-      cout << tokens[0] << " " << value << " " << variable << endl;
     }
+  }
+
+  for (int i = 0; i < line_count; i++) {
+    free(lines[i]);
   }
 
   return 0;
